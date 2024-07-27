@@ -24,6 +24,8 @@ document.addEventListener("DOMContentLoaded", function () {
             updatedTopics[index] = newTopic;
             chrome.storage.sync.set({ topics: updatedTopics }, () => {
               renderTopics(updatedTopics);
+              // Notify content script to update filter
+              notifyContentScript();
             });
           });
         }
@@ -38,6 +40,8 @@ document.addEventListener("DOMContentLoaded", function () {
           const updatedTopics = result.topics.filter((_, i) => i !== index);
           chrome.storage.sync.set({ topics: updatedTopics }, () => {
             renderTopics(updatedTopics);
+            // Notify content script to update filter
+            notifyContentScript();
           });
         });
       };
@@ -57,6 +61,8 @@ document.addEventListener("DOMContentLoaded", function () {
         chrome.storage.sync.set({ topics: updatedTopics }, () => {
           newTopicInput.value = "";
           renderTopics(updatedTopics);
+          // Notify content script to update filter
+          notifyContentScript();
         });
       });
     }
@@ -70,6 +76,8 @@ document.addEventListener("DOMContentLoaded", function () {
         toggleFilterButton.textContent = newStatus
           ? "Disable Filter"
           : "Enable Filter";
+        // Notify content script to update filter
+        notifyContentScript();
       });
     });
   });
@@ -81,4 +89,11 @@ document.addEventListener("DOMContentLoaded", function () {
       ? "Disable Filter"
       : "Enable Filter";
   });
+
+  // Notify content script to update filter
+  function notifyContentScript() {
+    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+      chrome.tabs.sendMessage(tabs[0].id, { action: "updateFilter" });
+    });
+  }
 });
