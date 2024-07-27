@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "YouTube Topic Filter",
+  "version": "1.0",
+  "permissions": ["tabs", "storage", "identity"],
+  "host_permissions": [
+    "https://*.youtube.com/*",
+    "https://www.googleapis.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://*.youtube.com/*"],
+      "js": ["contentScript.js"]
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  }
+}

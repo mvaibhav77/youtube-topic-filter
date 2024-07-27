@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>YouTube Topic Filter</title>
+    <!-- Bootstrap CSS -->
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+    />
+    <style>
+      body {
+        width: 300px;
+        padding: 15px;
+      }
+      #topicsList button {
+        margin-left: 10px;
+      }
+      #topicsList li {
+        display: flex;
+        align-items: center;
+      }
+    </style>
+  </head>
+  <body>
+    <h1 class="h4 mb-3">YouTube Filter</h1>
+
+    <div class="form-group">
+      <input
+        type="text"
+        class="form-control"
+        id="newTopic"
+        placeholder="Enter a topic"
+      />
+    </div>
+
+    <button class="btn btn-primary mb-3" id="addTopic">Add Topic</button>
+
+    <h2 class="h5">Active Topics</h2>
+    <ul class="list-group" id="topicsList"></ul>
+
+    <button class="btn btn-secondary mt-3" id="toggleFilter">
+      Toggle Filter
+    </button>
+
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script src="popup.js"></script>
+  </body>
+</html>
