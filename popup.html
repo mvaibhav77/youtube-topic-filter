@@ -2,7 +2,6 @@
 <html>
   <head>
     <title>YouTube Topic Filter</title>
-    <!-- Bootstrap CSS -->
     <link
       rel="stylesheet"
       href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
@@ -10,43 +9,144 @@
     <style>
       body {
         width: 300px;
+        min-height: 500px;
         padding: 15px;
+        background-color: #343a40;
+        color: #fff;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
       }
-      #topicsList button {
+      #topicsList button,
+      #hiddenTopicsList button {
         margin-left: 10px;
       }
-      #topicsList li {
+      #topicsList li,
+      #hiddenTopicsList li {
         display: flex;
         align-items: center;
+      }
+      .nav-tabs .nav-link {
+        background-color: #495057;
+        color: #fff;
+        border: none;
+      }
+      .nav-tabs .nav-item.show .nav-link,
+      .nav-tabs .nav-link.active {
+        background-color: #fff;
+        color: #343a40;
+      }
+      .form-control {
+        background-color: #495057;
+        border: none;
+        color: #fff;
+      }
+      .list-group-item {
+        background-color: #495057;
+        border: none;
+        color: #fff;
+      }
+      .toggle-row {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100%;
+        flex-grow: 1;
+      }
+      .toggle-button-circle {
+        width: 120px;
+        height: 120px;
+        border-radius: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      .content {
+        flex-grow: 1;
       }
     </style>
   </head>
   <body>
-    <h1 class="h4 mb-3">YouTube Filter</h1>
+    <h1 class="h3 mb-3">YouTube Filter</h1>
 
-    <div class="form-group">
-      <input
-        type="text"
-        class="form-control"
-        id="newTopic"
-        placeholder="Enter a topic"
-      />
+    <div class="content">
+      <!-- TABS FOR TOPICS -->
+      <ul class="nav nav-tabs row mb-4" id="filterTabs" role="tablist">
+        <li class="nav-item w-100 col px-0 text-center">
+          <a
+            class="nav-link active"
+            id="recommend-tab"
+            data-toggle="tab"
+            href="#recommend"
+            role="tab"
+            aria-controls="recommend"
+            aria-selected="true"
+            >Recommend</a
+          >
+        </li>
+        <li class="nav-item w-100 col px-0 text-center">
+          <a
+            class="nav-link"
+            id="hide-tab"
+            data-toggle="tab"
+            href="#hide"
+            role="tab"
+            aria-controls="hide"
+            aria-selected="false"
+            >Hide</a
+          >
+        </li>
+      </ul>
+
+      <div class="tab-content" id="filterTabsContent">
+        <div
+          class="tab-pane fade show active"
+          id="recommend"
+          role="tabpanel"
+          aria-labelledby="recommend-tab"
+        >
+          <div class="form-group">
+            <input
+              type="text"
+              class="form-control"
+              id="newTopic"
+              placeholder="Enter a topic"
+            />
+          </div>
+          <button class="btn btn-primary mb-3" id="addTopic">Add Topic</button>
+          <h2 class="h5">Recommended Topics</h2>
+          <ul class="list-group" id="topicsList"></ul>
+        </div>
+        <div
+          class="tab-pane fade"
+          id="hide"
+          role="tabpanel"
+          aria-labelledby="hide-tab"
+        >
+          <div class="form-group">
+            <input
+              type="text"
+              class="form-control"
+              id="newHiddenTopic"
+              placeholder="Enter a topic to hide"
+            />
+          </div>
+          <button class="btn btn-primary mb-3" id="addHiddenTopic">
+            Add Topic to Hide
+          </button>
+          <h2 class="h5">Hidden Topics</h2>
+          <ul class="list-group" id="hiddenTopicsList"></ul>
+        </div>
+      </div>
     </div>
 
-    <button class="btn btn-primary mb-3" id="addTopic">Add Topic</button>
+    <div class="toggle-row">
+      <button class="btn btn-primary" id="toggleFilter">Toggle Filter</button>
+    </div>
 
-    <h2 class="h5">Active Topics</h2>
-    <ul class="list-group" id="topicsList"></ul>
-
-    <button class="btn btn-secondary mt-3" id="toggleFilter">
-      Toggle Filter
-    </button>
-
-    <!-- Local JavaScript Files -->
     <script src="js/jquery-3.5.1.min.js"></script>
     <script src="js/popper.min.js"></script>
     <script src="js/bootstrap.min.js"></script>
-
     <script src="popup.js"></script>
   </body>
 </html>

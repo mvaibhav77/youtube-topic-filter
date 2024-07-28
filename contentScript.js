@@ -1,5 +1,5 @@
 // Function to hide videos based on topics
-function hideNonMatchingVideos(topics) {
+function hideNonMatchingVideos(recommendedTopics, hiddenTopics) {
   const videoElements = document.querySelectorAll(
     "ytd-rich-item-renderer, ytd-video-renderer"
   );
@@ -9,13 +9,27 @@ function hideNonMatchingVideos(topics) {
     const description =
       video.querySelector("#description-text")?.textContent || "";
 
-    const shouldHide = !topics.some(
+    // Check if video matches any recommended topic
+    const matchesRecommended =
+      recommendedTopics.length !== 0
+        ? recommendedTopics.some(
+            (topic) =>
+              title.toLowerCase().includes(topic.toLowerCase()) ||
+              description.toLowerCase().includes(topic.toLowerCase())
+          )
+        : true;
+
+    // Check if video matches any hidden topic
+    const matchesHidden = hiddenTopics.some(
       (topic) =>
         title.toLowerCase().includes(topic.toLowerCase()) ||
         description.toLowerCase().includes(topic.toLowerCase())
     );
 
-    video.style.display = shouldHide ? "none" : "block";
+    // Determine if video should be shown
+    const shouldShow = matchesRecommended && !matchesHidden;
+
+    video.style.display = shouldShow ? "block" : "none";
   });
 }
 
@@ -32,13 +46,16 @@ function showAllVideos() {
 
 // Apply filter based on storage settings
 function applyFilter() {
-  chrome.storage.sync.get(["topics", "filterEnabled"], function (result) {
-    if (result.filterEnabled && result.topics && result.topics.length > 0) {
-      hideNonMatchingVideos(result.topics);
-    } else {
-      showAllVideos();
+  chrome.storage.sync.get(
+    ["topics", "hiddenTopics", "filterEnabled"],
+    function (result) {
+      if (result.filterEnabled) {
+        hideNonMatchingVideos(result.topics || [], result.hiddenTopics || []);
+      } else {
+        showAllVideos();
+      }
     }
-  });
+  );
 }
 
 // Initial filter application
