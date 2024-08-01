@@ -6,6 +6,8 @@ document.addEventListener("DOMContentLoaded", function () {
   const addHiddenTopicButton = document.getElementById("addHiddenTopic");
   const hiddenTopicsList = document.getElementById("hiddenTopicsList");
   const toggleFilterButton = document.getElementById("toggleFilter");
+  const detoxifyFeedButton = document.getElementById("detoxifyFeed");
+  const loadingOverlay = document.getElementById("loading");
   const filterTabs = document.getElementById("filterTabs");
   const filterTabsContent = document.getElementById("filterTabsContent");
   const toggleRow = document.querySelector(".toggle-row");
@@ -104,79 +106,83 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  addTopicButton.addEventListener("click", function () {
+  function notifyContentScript() {
+    chrome.runtime.sendMessage({ type: "updateFilter" });
+  }
+
+  function showLoading() {
+    loadingOverlay.style.display = "flex";
+  }
+
+  function hideLoading() {
+    loadingOverlay.style.display = "none";
+  }
+
+  addTopicButton.addEventListener("click", () => {
     const newTopic = newTopicInput.value.trim();
     if (newTopic) {
       chrome.storage.sync.get("topics", function (result) {
-        const updatedTopics = [...(result.topics || []), newTopic];
+        const updatedTopics = result.topics || [];
+        updatedTopics.push(newTopic);
         chrome.storage.sync.set({ topics: updatedTopics }, () => {
-          newTopicInput.value = "";
           renderTopics(updatedTopics);
+          newTopicInput.value = "";
           notifyContentScript();
         });
       });
     }
   });
 
-  addHiddenTopicButton.addEventListener("click", function () {
+  addHiddenTopicButton.addEventListener("click", () => {
     const newHiddenTopic = newHiddenTopicInput.value.trim();
     if (newHiddenTopic) {
       chrome.storage.sync.get("hiddenTopics", function (result) {
-        const updatedHiddenTopics = [
-          ...(result.hiddenTopics || []),
-          newHiddenTopic,
-        ];
+        const updatedHiddenTopics = result.hiddenTopics || [];
+        updatedHiddenTopics.push(newHiddenTopic);
         chrome.storage.sync.set({ hiddenTopics: updatedHiddenTopics }, () => {
-          newHiddenTopicInput.value = "";
           renderHiddenTopics(updatedHiddenTopics);
+          newHiddenTopicInput.value = "";
           notifyContentScript();
         });
       });
     }
   });
 
-  toggleFilterButton.addEventListener("click", function () {
+  toggleFilterButton.addEventListener("click", () => {
     chrome.storage.sync.get("filterEnabled", function (result) {
-      const newStatus = !result.filterEnabled;
-      chrome.storage.sync.set({ filterEnabled: newStatus }, () => {
-        updateToggleButton(newStatus);
-        toggleContentVisibility(newStatus);
+      const isEnabled = result.filterEnabled !== false;
+      chrome.storage.sync.set({ filterEnabled: !isEnabled }, () => {
+        toggleFilterButton.textContent = isEnabled
+          ? "Enable Filter"
+          : "Disable Filter";
         notifyContentScript();
       });
     });
   });
 
-  chrome.storage.sync.get(
-    ["topics", "hiddenTopics", "filterEnabled"],
-    function (result) {
-      renderTopics(result.topics || []);
-      renderHiddenTopics(result.hiddenTopics || []);
-      updateToggleButton(result.filterEnabled);
-      toggleContentVisibility(result.filterEnabled);
-    }
-  );
+  detoxifyFeedButton.addEventListener("click", () => {
+    showLoading();
+    chrome.runtime.sendMessage({ action: "detoxifyFeed" }, (response) => {
+      hideLoading();
+      if (response && response.success) {
+        alert("Feed detoxified successfully.");
+      } else {
+        alert("Error detoxifying feed.");
+      }
+    });
+  });
 
-  function toggleContentVisibility(isEnabled) {
-    const displayStyle = isEnabled ? "block" : "none";
-    content.style.display = displayStyle;
-  }
+  chrome.storage.sync.get("topics", function (result) {
+    renderTopics(result.topics || []);
+  });
 
-  function updateToggleButton(isEnabled) {
-    toggleFilterButton.textContent = isEnabled
+  chrome.storage.sync.get("hiddenTopics", function (result) {
+    renderHiddenTopics(result.hiddenTopics || []);
+  });
+
+  chrome.storage.sync.get("filterEnabled", function (result) {
+    toggleFilterButton.textContent = result.filterEnabled
       ? "Disable Filter"
       : "Enable Filter";
-    toggleFilterButton.classList.toggle("bg-danger", isEnabled);
-    toggleFilterButton.classList.toggle("bg-primary", !isEnabled);
-    if (!isEnabled) {
-      toggleFilterButton.classList.add("toggle-button-circle");
-    } else {
-      toggleFilterButton.classList.remove("toggle-button-circle");
-    }
-  }
-
-  function notifyContentScript() {
-    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-      chrome.tabs.sendMessage(tabs[0].id, { action: "updateFilter" });
-    });
-  }
+  });
 });
