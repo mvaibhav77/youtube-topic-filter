@@ -5,11 +5,13 @@
   "description": "Filter YouTube recommendations based on topics.",
   "permissions": [
     "storage",
+    "tabs",
     "activeTab",
     "scripting",
     "alarms",
     "webNavigation"
   ],
+  "host_permissions": ["http://*/*", "https://*/*"],
   "background": {
     "service_worker": "background.js"
   },

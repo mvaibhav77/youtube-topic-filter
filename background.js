@@ -3,10 +3,8 @@ chrome.runtime.onInstalled.addListener(() => {
     topics: [],
     hiddenTopics: [],
     filterEnabled: true,
+    isLoading: false,
   });
-
-  // Set up an initial schedule
-  scheduleDetoxifyFeed();
 });
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
@@ -38,30 +36,41 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     });
     return true;
   }
-});
 
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "detoxifyFeed") {
     detoxifyFeed()
       .then(() => {
         sendResponse({ success: true });
+        chrome.storage.sync.set({ isLoading: false });
+        notifyPopupAndContent();
       })
       .catch((error) => {
         console.error(error);
         sendResponse({ success: false });
+        chrome.storage.sync.set({ isLoading: false });
+        notifyPopupAndContent();
       });
-    return true; // Keeps the message channel open for asynchronous response
+    chrome.storage.sync.set({ isLoading: true });
+    return true; // Will respond asynchronously.
   }
 });
 
-
 async function detoxifyFeed() {
+  await new Promise((resolve) => {
+    chrome.storage.sync.set({ isLoading: true }, resolve);
+  });
+
   const result = await new Promise((resolve) => {
     chrome.storage.sync.get(["topics"], resolve);
   });
 
   const recommendedTopics = result.topics || [];
-  if (recommendedTopics.length === 0) return;
+  if (recommendedTopics.length === 0) {
+    await new Promise((resolve) => {
+      chrome.storage.sync.set({ isLoading: false }, resolve);
+    });
+    return;
+  }
 
   const searchQueries = recommendedTopics.flatMap((topic) => [
     `intitle:${topic}`,
@@ -76,37 +85,62 @@ async function detoxifyFeed() {
       )}`
   );
 
+  const window = await new Promise((resolve) => {
+    chrome.windows.create({ url: "about:blank", state: "minimized" }, resolve);
+  });
+
   const tabIds = [];
   for (const url of searchUrls) {
     const tab = await new Promise((resolve) => {
-      chrome.tabs.create({ url, active: false }, resolve);
+      chrome.tabs.create({ windowId: window.id, url, active: false }, resolve);
     });
     tabIds.push(tab.id);
   }
 
-  // Ensure search results are processed
   await new Promise((resolve) => setTimeout(resolve, 40000));
 
-  // Close tabs
   for (const tabId of tabIds) {
     await new Promise((resolve) => {
       chrome.tabs.remove(tabId, resolve);
     });
   }
 
-  // Additional filtering can be done here if needed
-}
-
-// Schedule the detoxifyFeed function
-function scheduleDetoxifyFeed() {
-  const INTERVAL = 100000; // 100 sec in milliseconds
-  chrome.alarms.create("detoxifyFeedAlarm", {
-    periodInMinutes: INTERVAL / 60000,
+  await new Promise((resolve) => {
+    chrome.windows.remove(window.id, resolve);
   });
 
-  chrome.alarms.onAlarm.addListener((alarm) => {
-    if (alarm.name === "detoxifyFeedAlarm") {
-      detoxifyFeed();
-    }
+  await new Promise((resolve) => {
+    chrome.storage.sync.set({ isLoading: false }, resolve);
+  });
+
+  chrome.tabs.query({ url: "*://www.youtube.com/*" }, function (tabs) {
+    tabs.forEach((tab) => {
+      chrome.tabs.reload(tab.id);
+    });
+  });
+
+  setTimeout(() => {
+    console.log("Detoxify feed completed.");
+    resolve();
+  }, 5000);
+}
+
+function notifyPopupAndContent() {
+  chrome.runtime.sendMessage({
+    action: "updateLoadingState",
+    isLoading: false,
+  });
+  chrome.tabs.query({ url: "*://www.youtube.com/*" }, (tabs) => {
+    tabs.forEach((tab) => {
+      chrome.tabs.sendMessage(tab.id, { action: "refreshContent" });
+    });
   });
 }
+
+chrome.alarms.create("detoxifyFeed", { periodInMinutes: 6 });
+
+chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name === "detoxifyFeed") {
+    detoxifyFeed().catch(console.error);
+  }
+});
